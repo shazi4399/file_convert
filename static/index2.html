@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Converter Toolkit</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin: 15px 0 5px;
+        }
+        select, input[type="file"], button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .message.error {
+            color: red;
+        }
+        .message.success {
+            color: green;
+        }
+        .instructions {
+            margin-top: 20px;
+        }
+        .instructions h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .instructions pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .instructions .details {
+            display: none;
+            margin-top: 10px;
+        }
+        .instructions button {
+            width: auto;
+            margin-top: 10px;
+            background-color: #6c757d;
+        }
+        .instructions button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>File Converter Toolkit</h1>
+        <p>Upload your file, select the conversion mode, and download the result.</p>
+    </div>
+
+    <div class="container">
+        <form id="convertForm">
+            <label for="inputFile">Select File:</label>
+            <input type="file" id="inputFile" name="input_file" required>
+
+            <label for="conversionMode">Choose Conversion Mode:</label>
+            <select id="conversionMode" name="conversion_mode" required>
+                <option value="">-- Select an Option --</option>
+                <option value="convert_odd">Convert Odd</option>
+                <option value="convert_patch">Convert Patch</option>
+                <option value="convert_defect">Convert Defect</option>
+                <option value="convert_collection">Convert Collection</option>
+                <option value="convert_excludeCollection">Convert ExcludeCollection</option>
+                <option value="convert_exp">Convert exp</option>
+                <option value="convert_crowdsourcing">Convert Crowdsourcing</option>
+                <option value="extract_log">Extract Log</option>
+            </select>
+
+            <button type="submit">提交</button>
+        </form>
+
+        <div id="message" class="message"></div>
+        <div class="instructions">
+            <h2>工具使用说明</h2>
+            <button onclick="toggleDetails()">使用帮助</button>
+            <div id="details" class="details">
+                <p><strong>简介：</strong></p>
+                <p>`toolkit` 是一个命令行工具，用于将不同类型的输入数据转换为 `.sqlite3` 格式，可以方便导入QGIS中进行可视化。</p>
+                <p><strong>基本用法：</strong></p>
+                <pre>
+1. 查看帮助：
+   bash run_toolkit.sh -h
+
+2. 使用命令：
+   bash run_toolkit.sh -命令参数 input output
+
+3. 支持的转换模式：
+   -convert_odd:处理输入文件中的OddMap表
+   -convert_patch：处理输入文件中的patch表
+   -convert_defect：处理输入文件中的defect表
+   -convert_collection：处理输入文件中的collection表，采集区的内容
+   -convert_excludeCollection：处理输入文件中的collection表，非采集区的内容
+   -convert_exp：处理经验图层信息
+   -convert_crowdsourcing：处理众源图层信息
+   -extract_log：上传录包，提取日志文件
+                </pre>
+                <p><strong>示例：</strong></p>
+                <pre>
+bash run_toolkit.sh -convert_collection \
+~/Downloads/HQ_PatchODD \
+~/Downloads/collection.sq3
+                </pre>
+                <p><strong>注意事项：</strong></p>
+                <ul>
+                    <li><strong>路径说明：</strong> `/input/path/HQ_PatchODD`: 输入文件路径。</li>
+                    <li><strong>权限：</strong> 确保文件权限正确。</li>
+                    <li><strong>依赖：</strong> 确保工具依赖环境正确。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleDetails() {
+            const details = document.getElementById("details");
+            if (details.style.display === "none" || details.style.display === "") {
+                details.style.display = "block";
+            } else {
+                details.style.display = "none";
+            }
+        }
+
+        document.getElementById("convertForm").addEventListener("submit", async function (event) {
+            event.preventDefault(); // Prevent the default form submission behavior
+
+            const inputFile = document.getElementById("inputFile").files[0];
+            const conversionMode = document.getElementById("conversionMode").value;
+            const messageDiv = document.getElementById("message");
+
+            // Reset message
+            messageDiv.innerHTML = "";
+
+            if (!inputFile) {
+                messageDiv.innerHTML = '<p class="error">Please select a file to upload.</p>';
+                return;
+            }
+
+            if (!conversionMode) {
+                messageDiv.innerHTML = '<p class="error">Please select a conversion mode.</p>';
+                return;
+            }
+
+            // Display converting message
+            messageDiv.innerHTML = '<p class="success">文件处理进行中... 请耐心等待.</p>';
+
+            // Create form data
+            const formData = new FormData();
+            formData.append("input_file", inputFile);
+            formData.append("conversion_mode", conversionMode);
+
+            let endpoint = "/convert";
+            if (conversionMode === "extract_log") {
+                endpoint = "/extract_log";
+            }
+
+            try {
+                // Send the request to the appropriate backend route
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    messageDiv.innerHTML = `<p class="error">Error: ${errorData.error}</p>`;
+                    return;
+                }
+
+                // Handle file download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = conversionMode === "extract_log" ? "log_file.zip" : "converted_file.zip";
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                messageDiv.innerHTML = '<p class="success">操作成功！ 文件已下载。(浏览器右上角弹窗，请点击保存)</p>';
+            } catch (error) {
+                console.error("Error:", error);
+                messageDiv.innerHTML = '<p class="error">An unexpected error occurred.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
